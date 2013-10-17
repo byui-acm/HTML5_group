@@ -1,15 +1,16 @@
 
 // Constants
-var LENGTH     = 8;
-var TILE_SIZE  = 50;
+var LENGTH        = 8;
+var TILE_SIZE     = 50;
 
 // Variables
-var lightBoard = {};
-var darkBoard  = {};
-var canvasL    = document.getElementById('light');
-var canvasD    = document.getElementById('dark');
-var ctxL       = canvasL.getContext('2d');
-var ctxD       = canvasD.getContext('2d');
+var lightBoard    = {};
+var darkBoard     = {};
+var canvasL       = document.getElementById('light');
+var canvasD       = document.getElementById('dark');
+var ctxL          = canvasL.getContext('2d');
+var ctxD          = canvasD.getContext('2d');
+var clickFunction = {};
 
 /*
  * Onclick event
@@ -18,13 +19,26 @@ clickHandler = function(event) {
   var mouseX = event.offsetX || event.layerX;
   var mouseY = event.offsetY || event.layerY;
 
-  var yPos = Math.floor(mouseY / TILE_SIZE);
-  var xPos = Math.floor(mouseX / TILE_SIZE);
+  var col = Math.floor(mouseY / TILE_SIZE);
+  var row = Math.floor(mouseX / TILE_SIZE);
 
-  flipRookTiles(xPos, yPos);
+  clickFunction(row, col);
 };
 canvasL.onclick = function(event) {clickHandler(event)};
 canvasD.onclick = function(event) {clickHandler(event)};
+clickFunction = flipRookTiles;
+
+/*
+ * Change the click handler for flipping
+ */
+function changeClickHandler(name, func) {
+  clickFunction = func;
+  $( ".button" ).each(function() {
+    $( this ).removeClass( "active" );
+  });
+
+  $('#'+name).addClass('active');
+}
 
 /*
  * Create a new board with the color provided
@@ -42,8 +56,15 @@ function makeBoard(color) {
   return board;
 }
 
-lightBoard = makeBoard("green");
-darkBoard  = makeBoard("gray");
+/*
+ * Reset the tiles on both boards
+ */
+function reset() {
+  lightBoard = makeBoard("green");
+  darkBoard  = makeBoard("gray");
+
+  drawBoards();
+}
 
 /*
  * Draw the boards and their tiles
@@ -78,22 +99,21 @@ function drawBoards() {
   ctxD.stroke();
 }
 
-drawBoards();
-
 /*
- * Flip all horizontal and vertical tiles centered on xPos, yPos
+ * Flip all horizontal and vertical tiles centered on row, col
  */
-function flipRookTiles(xPos, yPos) {
+function flipRookTiles(row, col) {
+  var rowTemp, colTemp;
   for (var i = 0; i < LENGTH; i++) {
-    rowTemp = lightBoard[xPos][i];
-    colTemp = lightBoard[i][yPos];
+    rowTemp = lightBoard[row][i];
+    colTemp = lightBoard[i][col];
 
-    lightBoard[xPos][i] = darkBoard[xPos][i];
-    darkBoard[xPos][i] = rowTemp;
+    lightBoard[row][i] = darkBoard[row][i];
+    darkBoard[row][i] = rowTemp;
 
-    if (i != xPos) {
-      lightBoard[i][yPos] = darkBoard[i][yPos];
-      darkBoard[i][yPos] = colTemp;
+    if (i != row) {
+      lightBoard[i][col] = darkBoard[i][col];
+      darkBoard[i][col] = colTemp;
     }
   }
 
@@ -101,34 +121,28 @@ function flipRookTiles(xPos, yPos) {
 }
 
 /*
- * Flip all diagonal tiles centered on xPos, yPos
+ * Flip all diagonal tiles centered on row, col
  */
-function flipBishTiles(xPos, yPos) {
-  // make two sets of y variables
-  // iterate on x, when ys are equal
-  // only flip one.
-  var x = xPos;
-  var y1 = yPos;
-  var y2 = yPos;
-  while (x > 0) {
-    x--;
-    y1--;
-    y2++;
-  }
-  for ( ; x < LENGTH; x++) {
-    if (y1 >= 0 && y1 < LENGTH) {
-      temp = lightBoard[x][y1];
-      lightBoard[x][y1] = darkBoard[x][y1];
-      darkBoard[x][y1] = temp;
+function flipBishTiles(row, col) {
+  var row1, row2, temp;
+  for (var i = 0; i < LENGTH; i++) {
+    row1 = row - (col - i);
+    row2 = row + (col - i);
+
+    if (row1 < LENGTH && row1 >= 0) {
+      temp = lightBoard[row1][i];
+      lightBoard[row1][i] = darkBoard[row1][i];
+      darkBoard[row1][i] = temp;
     }
-    y1++;
-    if (y2 >= 0 && y2 < LENGTH && y1 != y2) {
-      temp = lightBoard[x][y2];
-      lightBoard[x][y2] = darkBoard[x][y2];
-      darkBoard[x][y2] = temp;
+
+    if (row2 < LENGTH && row2 >= 0 && row1 != row2) {
+      temp = lightBoard[row2][i];
+      lightBoard[row2][i] = darkBoard[row2][i];
+      darkBoard[row2][i] = temp;
     }
-    y2--;
   }
 
   drawBoards();
 }
+
+reset();

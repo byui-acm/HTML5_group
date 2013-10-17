@@ -7,11 +7,36 @@
 		border: 1px solid black;
 		float: left;
 	}
+	.buttons {
+		position: absolute;
+		top: 100px;
+		right: 100px;
+	}
+	.button {
+		padding: 10px;
+		background: gray;
+		border: 1px solid black;
+		-webkit-border-radius: 5px;
+		-moz-border-radius: 5px;
+		border-radius: 5px;
+		margin: 13px;
+		cursor: pointer;
+	}
+	.button.active {
+		border: 1px solid red;
+		background: LightGray;
+	}
 	</style>
+	<script src="jquery.1.10.2.min.js"></script>
 </head>
 <body>
 	<canvas id="light" width="400" height="400"></canvas>
 	<canvas id="dark" width="400" height="400"></canvas>
+	<div class="buttons">
+		<div class="button active" id="rook" onclick="changeClickHandler('rook',flipRookTiles);">FlipRookTiles</div>
+		<div class="button" id="bish" onclick="changeClickHandler('bish',flipBishTiles);">FlipBishTiles</div>
+		<div class="button" onclick="reset();">Reset Boards</div>
+	</div>
 	<script src="flipside.js"></script>
 </body>
 </html>
