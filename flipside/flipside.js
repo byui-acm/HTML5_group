@@ -1,11 +1,34 @@
-//Not tested yet, just concept JS code.
-var LENGTH = 8;
-var TILE_SIZE = 50;
-var canvasL = document.getElementById('light');
-var canvasD = document.getElementById('dark');
-var ctxL = canvasL.getContext('2d');
-var ctxD = canvasD.getContext('2d');
 
+// Constants
+var LENGTH     = 8;
+var TILE_SIZE  = 50;
+
+// Variables
+var lightBoard = {};
+var darkBoard  = {};
+var canvasL    = document.getElementById('light');
+var canvasD    = document.getElementById('dark');
+var ctxL       = canvasL.getContext('2d');
+var ctxD       = canvasD.getContext('2d');
+
+/*
+ * Onclick event
+ */
+clickHandler = function(event) {
+  var mouseX = event.offsetX || event.layerX;
+  var mouseY = event.offsetY || event.layerY;
+
+  var yPos = Math.floor(mouseY / TILE_SIZE);
+  var xPos = Math.floor(mouseX / TILE_SIZE);
+
+  flipRookTiles(xPos, yPos);
+};
+canvasL.onclick = function(event) {clickHandler(event)};
+canvasD.onclick = function(event) {clickHandler(event)};
+
+/*
+ * Create a new board with the color provided
+ */
 function makeBoard(color) {
   var board = [];
   for (var i = 0; i < LENGTH; i++) {
@@ -19,10 +42,14 @@ function makeBoard(color) {
   return board;
 }
 
-var lightBoard = makeBoard("green");
-var darkBoard = makeBoard("gray");
+lightBoard = makeBoard("green");
+darkBoard  = makeBoard("gray");
 
+/*
+ * Draw the boards and their tiles
+ */
 function drawBoards() {
+  // Draw each tile
   for (var row = 0; row < LENGTH; row++) {
     for (var col = 0; col < LENGTH; col++) {
       ctxL.fillStyle = lightBoard[row][col].type;
@@ -33,6 +60,7 @@ function drawBoards() {
     }
   }
 
+  // Draw the tile lines
   ctxL.beginPath();
   ctxD.beginPath();
   for (var i = 0; i < LENGTH; i++) {
@@ -52,6 +80,9 @@ function drawBoards() {
 
 drawBoards();
 
+/*
+ * Flip all horizontal and vertical tiles centered on xPos, yPos
+ */
 function flipRookTiles(xPos, yPos) {
   for (var i = 0; i < LENGTH; i++) {
     rowTemp = lightBoard[xPos][i];
@@ -69,6 +100,9 @@ function flipRookTiles(xPos, yPos) {
   drawBoards();
 }
 
+/*
+ * Flip all diagonal tiles centered on xPos, yPos
+ */
 function flipBishTiles(xPos, yPos) {
   // make two sets of y variables
   // iterate on x, when ys are equal
