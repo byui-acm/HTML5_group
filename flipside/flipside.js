@@ -232,7 +232,7 @@ function Unit() {
    */
   this.attack = function() {
     if (this.canAtack()) {
-      atkActions  ++;
+      atkActions++;
       return true;
     }
 
