@@ -1,15 +1,20 @@
 // Constants
-var LENGTH        = 8;    // size of the board
-var TILE_SIZE     = 50;   // size of a tile
+var LENGTH        = 8;        // size of the board
+var TILE_SIZE     = 50;       // size of a tile
+var WHITE         = 'white';
+var BLACK         = 'black';
+var WARRIOR       = 'warrior';
+var ARCHER        = 'archer';
+var WIZARD        = 'wizard';
 
 // Variables
 var whiteBoard    = {};
 var blackBoard    = {};
 var canvasL       = document.getElementById('white');
-var canvasD       = document.getElementById('black');
+var canvasB       = document.getElementById('black');
 var ctxL          = canvasL.getContext('2d');
-var ctxB          = canvasD.getContext('2d');
-var clickFunction = {};   // the function to perform on a click
+var ctxB          = canvasB.getContext('2d');
+var clickFunction = {};       // the function to perform on a click
 
 /**
  * Onclick event
@@ -25,7 +30,7 @@ clickHandler = function(event) {
   clickFunction(row, col);
 };
 canvasL.onclick = function(event) {clickHandler(event)};
-canvasD.onclick = function(event) {clickHandler(event)};
+canvasB.onclick = function(event) {clickHandler(event)};
 clickFunction = flipRookTiles;
 
 /**
@@ -43,65 +48,124 @@ function changeClickHandler(name, func) {
 }
 
 /**
- * Create a new board
- * @param color The color to assign all new tiles of the board
- *
- * @return The new board array
+ * Asset pre-loader object. Loads all images and sounds
  */
-function makeBoard(color) {
-  var board = [];
-  for (var i = 0; i < LENGTH; i++) {
-    board[i] = [];
-    for (var j = 0; j < LENGTH; j++) {
-      board[i][j] = {}; // Tile type.
-      board[i][j].type = color;
+assetLoader = new function() {
+  // images
+  this.imgs = {
+    'white_tile' : new Image(),
+    'black_tile' : new Image(),
+    'warrior'    : new Image()
+  };
+
+  // sounds
+  this.sounds = {};
+
+  var assetsLoaded = 0;                                // how many assets have been loaded
+  var numImgs      = Object.keys(this.imgs).length;    // total number of image assets
+  var numSounds    = Object.keys(this.sounds).length;  // total number of sound assets
+  this.totalAssest = numImgs + numSounds;              // total number of assets
+  this.isReady     = false;                            // know when all assets have been loaded
+
+  /**
+   * Ensure all images are loaded before using them
+   * @param self Reference to the assetLoader object
+   */
+  function imageLoaded(self) {
+    assetsLoaded++;
+    if (assetsLoaded === self.totalAssest) {
+      self.isReady = true;
+      window.startGame();
     }
+  };
+
+  // set callback for asset loading
+  var self = this;
+  for (img in this.imgs) {
+    this.imgs[img].onload = function() { imageLoaded(self); };
+  }
+  for (sound in this.sounds) {
+    this.sounds[sound].onload = function() { imageLoaded(self); };
   }
 
-  return board;
+  // set all asset sources
+  this.imgs.white_tile.src = 'imgs/white-tile.png';
+  this.imgs.black_tile.src = 'imgs/black-tile.png';
+  this.imgs.warrior.src    = 'imgs/warrior.png';
 }
 
 /**
- * Reset the tiles on both boards
+ * Tile object
+ * @param color The color type for the tile (white, black)
  */
-function reset() {
-  whiteBoard = makeBoard("green");
-  blackBoard = makeBoard("gray");
+function Tile(color) {
+  this.type = color;          // white, black
+  this.img  = color+"_tile";  // key to the assetLoader.imgs object
+  this.unit = {};             // reference to the Unit object that is on the tile
 
-  drawBoards();
+  /**
+   * Draw the tile
+   * @param ctx The canvas context to draw to
+   */
+  this.draw = function(ctx, row, col) {
+    ctx.drawImage(assetLoader.imgs[this.img], row * TILE_SIZE, col * TILE_SIZE);
+
+    // draw the unit on the square if there is one
+    if (Object.keys(this.unit).length) {
+      this.unit.draw(ctx);
+    }
+  }
 }
 
 /**
- * Draw the boards and their tiles
+ * Board object
+ * @param color The color type for the tile (white, black)
+ */
+function Board(color) {
+  this.type          = color;                // white, black
+  this.board         = [];                   // 2d array that holds Tile objects
+  this.canvas        = (color === WHITE ? canvasL : canvasB);
+  this.ctx           = (color === WHITE ? ctxL    : ctxB);
+  this.ctx.fillStyle = 'rgba(0, 0, 0, .1)';  // draw a dark transparent square over a tile
+
+  /**
+   * Draw the board tiles
+   */
+  this.draw = function() {
+    for (var row = 0; row < LENGTH; row++) {
+      for (var col = 0; col < LENGTH; col++) {
+        this.board[row][col].draw(this.ctx, row, col);
+
+        // alternate drawing tiles lighter or darker
+        if ((row % 2 && col % 2) || (!(row % 2) && !(col % 2))) {
+          this.ctx.fillRect(row * TILE_SIZE, col * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+  };
+
+  /**
+   * Reset the board
+   */
+  this.reset = function() {
+    this.board = [];
+    for (var i = 0; i < LENGTH; i++) {
+      this.board[i] = [];
+      for (var j = 0; j < LENGTH; j++) {
+        this.board[i][j] = new Tile(this.type);
+      }
+    }
+  };
+
+  this.reset();  // make the board
+}
+
+/**
+ * Draw both boards
  */
 function drawBoards() {
-  // draw each tile
-  for (var row = 0; row < LENGTH; row++) {
-    for (var col = 0; col < LENGTH; col++) {
-      ctxL.fillStyle = whiteBoard[row][col].type;
-      ctxL.fillRect(row * TILE_SIZE, col * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-      ctxB.fillStyle = blackBoard[row][col].type;
-      ctxB.fillRect(row * TILE_SIZE, col * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    }
-  }
-
-  // draw the tile lines
-  ctxL.beginPath();
-  ctxB.beginPath();
-  for (var i = 0; i < LENGTH; i++) {
-    ctxL.moveTo(0, TILE_SIZE * i);
-    ctxL.lineTo(canvasL.width, TILE_SIZE * i);
-    ctxL.moveTo(TILE_SIZE * i, 0);
-    ctxL.lineTo(TILE_SIZE * i, canvasL.height);
-
-    ctxB.moveTo(0, TILE_SIZE * i);
-    ctxB.lineTo(canvasD.width, TILE_SIZE * i);
-    ctxB.moveTo(TILE_SIZE * i, 0);
-    ctxB.lineTo(TILE_SIZE * i, canvasD.height);
-  }
-  ctxL.stroke();
-  ctxB.stroke();
+  whiteBoard.draw();
+  blackBoard.draw();
 }
 
 /**
@@ -112,15 +176,15 @@ function drawBoards() {
 function flipRookTiles(row, col) {
   var rowTemp, colTemp;
   for (var i = 0; i < LENGTH; i++) {
-    rowTemp = whiteBoard[row][i];
-    colTemp = whiteBoard[i][col];
+    rowTemp = whiteBoard.board[row][i];
+    colTemp = whiteBoard.board[i][col];
 
-    whiteBoard[row][i] = blackBoard[row][i];
-    blackBoard[row][i] = rowTemp;
+    whiteBoard.board[row][i] = blackBoard.board[row][i];
+    blackBoard.board[row][i] = rowTemp;
 
     if (i != row) {
-      whiteBoard[i][col] = blackBoard[i][col];
-      blackBoard[i][col] = colTemp;
+      whiteBoard.board[i][col] = blackBoard.board[i][col];
+      blackBoard.board[i][col] = colTemp;
     }
   }
 
@@ -139,34 +203,19 @@ function flipBishTiles(row, col) {
     row2 = row + (col - i);
 
     if (row1 < LENGTH && row1 >= 0) {
-      temp = whiteBoard[row1][i];
-      whiteBoard[row1][i] = blackBoard[row1][i];
-      blackBoard[row1][i] = temp;
+      temp = whiteBoard.board[row1][i];
+      whiteBoard.board[row1][i] = blackBoard.board[row1][i];
+      blackBoard.board[row1][i] = temp;
     }
 
     if (row2 < LENGTH && row2 >= 0 && row1 != row2) {
-      temp = whiteBoard[row2][i];
-      whiteBoard[row2][i] = blackBoard[row2][i];
-      blackBoard[row2][i] = temp;
+      temp = whiteBoard.board[row2][i];
+      whiteBoard.board[row2][i] = blackBoard.board[row2][i];
+      blackBoard.board[row2][i] = temp;
     }
   }
 
-  drawBoards();
-}
-
-/**
- * Asset pre-loader object. Loads all images and sounds
- */
-assetLoader = new function() {
-  // images
-  this.imgs = {
-    'warrior' : new Image(),
-    'archer'  : new Image(),
-    'wizard'  : new Image()
-  };
-
-  // sounds
-  this.sounds = {};
+  drawBoards()
 }
 
 /**
@@ -180,7 +229,6 @@ function Unit() {
   };
   this.color       = '';   // white, black
   this.type        = '';   // warrior, archer, wizard
-  img              = {};   // reference to the assetLoader img
 
   // action stats
   var actionLimit  = 2;    // how many actions the unit can perform per turn
@@ -203,7 +251,7 @@ function Unit() {
    * @param ctx The canvas context to draw on
    */
   this.draw = function(ctx) {
-    ctx.drawImage(this.img, this.loc.row * TILE_SIZE, this.loc.col * TILE_SIZE);
+    ctx.drawImage(assetLoader.imgs[this.type], this.loc.row * TILE_SIZE, this.loc.col * TILE_SIZE);
   };
 
   /**
@@ -226,12 +274,16 @@ function Unit() {
 
   /**
    * Performs the unit's attack action
-   * Function to be overwritten for each unit type
+   * Function should overwritten if it is different from the base attack function
+   * @param row The row to move attack
+   * @param col The column to move attack
    *
    * @return True if the unit can use it's power, false otherwise
    */
-  this.attack = function() {
-    if (this.canAtack()) {
+  this.attack = function(row, col) {
+    if (this.canAtack() && this.inAtkRange(row, col)) {
+      // do something
+
       atkActions++;
       return true;
     }
@@ -300,8 +352,7 @@ function Unit() {
  */
 function Warrior(color) {
   this.color = color;
-  this.type  = 'Warrior';
-  this.img   = assetLoader.imgs.warrior;
+  this.type  = WARRIOR;
 
   this.hp    = 0;
   this.spd   = 0;
@@ -309,15 +360,6 @@ function Warrior(color) {
   this.dmg   = {
     'low'  : 0,
     'high' : 0
-  };
-
-  /**
-   * Performs the unit's attack action
-   *
-   * @return True if the unit can use it's power, false otherwise
-   */
-  this.attack = function() {
-    return;
   };
 }
 Warrior.prototype = new Unit(); // set up inheritance
@@ -328,8 +370,7 @@ Warrior.prototype = new Unit(); // set up inheritance
  */
 function Archer(color) {
   this.color = color;
-  this.type  = 'Archer';
-  this.img   = assetLoader.imgs.archer;
+  this.type  = ARCHER;
 
   this.hp    = 0;
   this.spd   = 0;
@@ -337,15 +378,6 @@ function Archer(color) {
   this.dmg   = {
     'low'  : 0,
     'high' : 0
-  };
-
-  /**
-   * Performs the unit's attack action
-   *
-   * @return True if the unit can use it's attack, false otherwise
-   */
-  this.attack = function() {
-    return;
   };
 }
 Archer.prototype = new Unit(); // set up inheritance
@@ -356,21 +388,15 @@ Archer.prototype = new Unit(); // set up inheritance
  */
 function Wizard(color) {
   this.color = color;
-  this.type  = 'Wizard';
-  this.img   = assetLoader.imgs.wizard;
+  this.type  = WIZARD;
 
   this.hp    = 0;
   this.spd   = 0;
-  this.rng   = 0;
-  this.dmg   = {
-    'low'  : 0,
-    'high' : 0
-  };
 
   /**
-   * Performs the unit's attack action
+   * Performs the Wizards flip attack
    *
-   * @return True if the unit can use it's power, false otherwise
+   * @return True if the Wizard can use it's power, false otherwise
    */
   this.attack = function() {
     return;
@@ -378,4 +404,20 @@ function Wizard(color) {
 }
 Wizard.prototype = new Unit(); // set up inheritance
 
-reset();
+/**
+ * Rest the game
+ */
+function reset() {
+  whiteBoard.reset();
+  blackBoard.reset();
+  drawBoards();
+}
+
+/**
+ * Start the game
+ */
+function startGame() {
+  whiteBoard = new Board(WHITE);
+  blackBoard = new Board(BLACK);
+  drawBoards();
+}
