@@ -405,7 +405,7 @@ function Wizard(color) {
 Wizard.prototype = new Unit(); // set up inheritance
 
 /**
- * Rest the game
+ * Reset the game
  */
 function reset() {
   whiteBoard.reset();
