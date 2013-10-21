@@ -54,7 +54,12 @@ units are dead, their mages flee.
 +HTML5(HTML, CSS, Javascript)
 +WinJS, Android, web browser, and maybe iOS.
 
-####NOTES
+####NOTES for Developers
 Playtest for balance.
 Contains native structures to handle images and positioning.
 
+Things that could be  simplified
+* If the bonuses for positioning are kept the hp and dmg numbers should be choosen to keep round ints
+* The current hp and dmg of a unit should be hard coded as part of the sprite (add it in PS) and the sprite swapped out for the right hp lvl one
+* Terrain should be left out until much later
+* 
