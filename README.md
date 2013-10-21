@@ -60,6 +60,5 @@ Contains native structures to handle images and positioning.
 
 Things that could be  simplified
 * If the bonuses for positioning are kept the hp and dmg numbers should be choosen to keep round ints
-* The current hp and dmg of a unit should be hard coded as part of the sprite (add it in PS) and the sprite swapped out for the right hp lvl one
 * Terrain should be left out until much later
 * 
