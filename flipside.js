@@ -40,8 +40,8 @@ clickFunction = flipRookTiles;
  */
 function changeClickHandler(name, func) {
   clickFunction = func;
-  $( ".button" ).each(function() {
-    $( this ).removeClass( "active" );
+  $('.button').each(function() {
+    $( this ).removeClass('active');
   });
 
   $('#'+name).addClass('active');
@@ -52,14 +52,14 @@ function changeClickHandler(name, func) {
  */
 assetLoader = new function() {
   // images
-  this.imgs = {
-    'white_tile' : new Image(),
-    'black_tile' : new Image(),
-    'warrior'    : new Image()
+  this.imgs        = {
+    'white_tile' : 'imgs/white-tile.png',
+    'black_tile' : 'imgs/black-tile.png',
+    'warrior'    : 'imgs/warrior.png'
   };
 
   // sounds
-  this.sounds = {};
+  this.sounds      = {};
 
   var assetsLoaded = 0;                                // how many assets have been loaded
   var numImgs      = Object.keys(this.imgs).length;    // total number of image assets
@@ -68,10 +68,10 @@ assetLoader = new function() {
   this.isReady     = false;                            // know when all assets have been loaded
 
   /**
-   * Ensure all images are loaded before using them
+   * Ensure all assets are loaded before using them
    * @param self Reference to the assetLoader object
    */
-  function imageLoaded(self) {
+  function assetLoaded(self) {
     assetsLoaded++;
     if (assetsLoaded === self.totalAssest) {
       self.isReady = true;
@@ -79,19 +79,21 @@ assetLoader = new function() {
     }
   };
 
-  // set callback for asset loading
+  // create asset, set callback for asset loading, set asset source
   var self = this;
+  var src  = '';
   for (img in this.imgs) {
-    this.imgs[img].onload = function() { imageLoaded(self); };
+    src = this.imgs[img];
+    this.imgs[img] = new Image();
+    this.imgs[img].onload = function() { assetLoaded(self); };
+    this.imgs[img].src = src;
   }
   for (sound in this.sounds) {
-    this.sounds[sound].onload = function() { imageLoaded(self); };
+    src = this.sounds[sound];
+    this.sounds[sound] = new Audio();
+    this.sounds[sound].onload = function() { assetLoaded(self); };
+    this.sounds[sound].src = src;
   }
-
-  // set all asset sources
-  this.imgs.white_tile.src = 'imgs/white-tile.png';
-  this.imgs.black_tile.src = 'imgs/black-tile.png';
-  this.imgs.warrior.src    = 'imgs/warrior.png';
 }
 
 /**
@@ -100,7 +102,7 @@ assetLoader = new function() {
  */
 function Tile(color) {
   this.type = color;          // white, black
-  this.img  = color+"_tile";  // key to the assetLoader.imgs object
+  this.img  = color+'_tile';  // key to the assetLoader.imgs object
   this.unit = {};             // reference to the Unit object that is on the tile
 
   /**
