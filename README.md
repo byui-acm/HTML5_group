@@ -28,7 +28,7 @@ These bonuses can cancel each other out.
 
 ### Warrior
 ![warrior sprite](https://github.com/byui-acm/HTML5_group/blob/master/imgs/warrior.png "Warrior Sprite")
-
+get this working https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#images
 
 | Unit          | Description    |
 | ------------- |:-------------|
