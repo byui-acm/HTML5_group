@@ -1,3 +1,13 @@
+// =========================================================
+
+// BBBBB       OOOOO       AAA      RRRRRR     DDDDD   
+// BB   B     OO   OO     AAAAA     RR   RR    DD  DD  
+// BBBBBB     OO   OO    AA   AA    RRRRRR     DD   DD 
+// BB   BB    OO   OO    AAAAAAA    RR  RR     DD   DD 
+// BBBBBB      OOOO0     AA   AA    RR   RR    DDDDDD  
+
+// =========================================================
+
 // Constants
 var LENGTH        = 8;        // size of the board
 var TILE_SIZE     = 50;       // size of a tile
@@ -217,9 +227,19 @@ function flipBishTiles(row, col) {
     }
   }
 
-  drawBoards()
+  drawBoards();
 }
 
+// =========================================================
+
+// UU   UU    NN   NN    IIIII    TTTTTTT     SSSSS  
+// UU   UU    NNN  NN     III       TTT      SS      
+// UU   UU    NN N NN     III       TTT       SSSSS  
+// UU   UU    NN  NNN     III       TTT           SS 
+//  UUUUU     NN   NN    IIIII      TTT       SSSSS  
+
+// =========================================================
+                                                  
 /**
  * Unit base class
  */
@@ -231,6 +251,11 @@ function Unit() {
   };
   this.color       = '';   // white, black
   this.type        = '';   // warrior, archer, wizard
+
+  this.start_loc   = {     // starting placement of unit on board
+    'row'  : 0,
+    'col'  : 0
+  }
 
   // action stats
   var actionLimit  = 2;    // how many actions the unit can perform per turn
@@ -405,6 +430,37 @@ function Wizard(color) {
   };
 }
 Wizard.prototype = new Unit(); // set up inheritance
+
+// =========================================================
+
+//   GGGG    AAA   MM    MM EEEEEEE    LL       OOOOO    GGGG  IIIII  CCCCC  
+//  GG  GG  AAAAA  MMM  MMM EE         LL      OO   OO  GG  GG  III  CC    C 
+// GG      AA   AA MM MM MM EEEEE      LL      OO   OO GG       III  CC      
+// GG   GG AAAAAAA MM    MM EE         LL      OO   OO GG   GG  III  CC    C 
+//  GGGGGG AA   AA MM    MM EEEEEEE    LLLLLLL  OOOO0   GGGGGG IIIII  CCCCC  
+                                                                          
+
+// =========================================================
+
+// Steven is this what you are thinking for the object hierarchy of units?
+var light_units = new Array(
+  // Expected parameters are: (starting_loc, wizard type)
+    wizardD  = new Wizard(),
+    wizardO  = new Wizard(),
+    warrior1 = new Warrior(),
+    warrior2 = new Warrior(),
+    warrior3 = new Warrior(),
+    archer1  = new Archer(),
+    archer2  = new Archer(),
+    archer3  = new Archer()
+  );
+var dark_units = new Array(
+
+  );
+
+function populate_board() {
+
+}
 
 /**
  * Reset the game
