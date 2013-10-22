@@ -22,11 +22,17 @@ These bonuses can cancel each other out.
 
 
 ---
+## Units
 
 ## Units
+
+### Warrior
+![warrior sprite](https://github.com/byui-acm/HTML5_group/blob/master/imgs/warrior.png "Warrior Sprite")
+
+
 | Unit          | Description    |
 | ------------- |:-------------|
-| Melee     | can attack all squares around them each round, encouraging them to be surrounded. They have more hit points than archers, but move slower. |
+| Warrior     | can attack all squares around them each round, encouraging them to be surrounded. They have more hit points than archers, but move slower. |
 | Archers   | can attack units 3 or 4 squares away, move quickly, and hit hard, but have low hit points. An archer can take out another in 2 hits. |
 | Mages     | alter the fabric of reality, throwing combatants and the land they stand on across the realms. They do so in patters like the available moves of bishops and rooks in chess. They can protect themselves from damage, but are pushed back a space when attacked. They flip sides with their spells. |
 
