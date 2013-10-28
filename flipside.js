@@ -296,10 +296,6 @@ function Unit() {
   this.color       = '';     // white, black
   this.type        = '';     // warrior, archer, wizard
 
-  this.start_loc   = {       // starting placement of unit on board
-    'row'  : 0,
-    'col'  : 0
-  };
   this.isSelected  = false;  // if the unit is currently selected
 
   // action stats
@@ -313,10 +309,7 @@ function Unit() {
   this.hp           = 0;     // health
   this.spd          = 0;     // movement speed (how far unit can move)
   this.rng          = 0;     // attack range (how far unit can attack)
-  this.dmg          = {      // damage range, low-high
-    'low'  : 0,
-    'high' : 0
-  };
+  this.dmg          = 0;     // damage
 
   /**
    * Draw the unit to the board
@@ -469,6 +462,12 @@ function Unit() {
   };
 }
 
+
+//  CCCCC  LL        AAA    SSSSS   SSSSS  EEEEEEE  SSSSS  
+// CC    C LL       AAAAA  SS      SS      EE      SS      
+// CC      LL      AA   AA  SSSSS   SSSSS  EEEEE    SSSSS  
+// CC    C LL      AAAAAAA      SS      SS EE           SS 
+//  CCCCC  LLLLLLL AA   AA  SSSSS   SSSSS  EEEEEEE  SSSSS  
 /**
  * Warrior class
  * @param color The color to assign the unit
@@ -477,13 +476,11 @@ function Warrior(color, loc) {
   this.color = color;
   this.type  = WARRIOR;
   this.loc   = loc;
-  this.hp    = 0;
-  this.spd   = 0;
+  
+  this.hp    = 3;
+  this.spd   = 2;
   this.rng   = 1;
-  this.dmg   = {
-    'low'  : 0,
-    'high' : 0
-  };
+  this.dmg   = 2;
 }
 Warrior.prototype = new Unit(); // set up inheritance
 
@@ -496,13 +493,10 @@ function Archer(color, loc) {
   this.type  = ARCHER;
   this.loc   = loc;
 
-  this.hp    = 0;
-  this.spd   = 0;
-  this.rng   = 0;
-  this.dmg   = {
-    'low'  : 0,
-    'high' : 0
-  };
+  this.hp    = 2;
+  this.spd   = 3;
+  this.rng   = 2;
+  this.dmg   = 2;
 }
 Archer.prototype = new Unit(); // set up inheritance
 
@@ -510,13 +504,14 @@ Archer.prototype = new Unit(); // set up inheritance
  * Wizard class
  * @param color The color to assign the unit
  */
-function Wizard(color, loc) {
+function Wizard(color, loc, spell) {
   this.color = color;
   this.type  = WIZARD;
   this.loc   = loc;
+  this.spell = spell;
 
-  this.hp    = 0;
-  this.spd   = 0;
+  this.hp    = 5;
+  this.spd   = 4;
 
   /**
    * Performs the Wizards flip attack
@@ -544,14 +539,14 @@ function populate_boards() {
   // add light units to board
   var row = 0;
   for(var i=0; i<LENGTH; i++){
-    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}) }
+    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, "orth") }
     if(i==1){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==2){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
     if(i==3){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==4){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
     if(i==5){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==6){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
-    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}) }
+    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, "horz") }
   }
 
   // add dark units to board
