@@ -16,6 +16,8 @@ var BLACK        = 'black';
 var WARRIOR      = 'warrior';
 var ARCHER       = 'archer';
 var WIZARD       = 'wizard';
+var ORTH         = 'orth';
+var DIAG         = 'diag'
 
 // Variables
 var whiteBoard   = {};
@@ -92,10 +94,22 @@ clickHandler = function(event, boardColor) {
   }
 
   console.log(selectedUnit);
+  drawBoards();
+
+  selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
+  selectedUnit.drawAtkRange(window[selectedUnit.color+'Board'].ctx);
 
 };
 canvasL.onclick = function(event) {clickHandler(event, WHITE)};
 canvasB.onclick = function(event) {clickHandler(event, BLACK)};
+
+/**
+ * Onclick event
+ * @param event The mouse event object
+ */
+hoverHanlder = function(event) {
+
+}
 
 /**
  * Asset pre-loader object. Loads all images and sounds
@@ -180,13 +194,13 @@ function Board(color) {
   this.board         = [];                   // 2d array that holds Tile objects
   this.canvas        = (color === WHITE ? canvasL : canvasB);
   this.ctx           = (color === WHITE ? ctxL    : ctxB);
-  this.ctx.fillStyle = 'rgba(0, 0, 0, .1)';  // draw a dark transparent square over a tile
 
   /**
    * Draw the board tiles
    */
   this.draw = function() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = 'rgba(0, 0, 0, .1)';
 
     for (var row = 0; row < LENGTH; row++) {
       for (var col = 0; col < LENGTH; col++) {
@@ -317,11 +331,6 @@ function Unit() {
    */
   this.draw = function(ctx) {
     ctx.drawImage(assetLoader.imgs[this.type], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
-
-    if (this.isSelected) {
-      this.drawMoveRange(ctx);
-      this.drawAtkRange(ctx);
-    }
   };
 
   /**
@@ -330,44 +339,39 @@ function Unit() {
    */
   this.drawMoveRange = function(ctx) {
     // Highlight movement outline
-    var offset = 0;
-    var newCol;
-    for (var i = 0; i <= this.spd * 2; i++) {
-      newCol = this.loc.col - (this.spd - i);
-      ctx.strokeStyle = "rgb(0, 255, 0)";
+    ctx.lineWidth   = 2;
+    ctx.fillStyle   = 'rgba(72, 97, 196, .2)';
+    ctx.strokeStyle = '#4861C4';
 
-      // Left half
-      if (i <= this.spd) {
-        // Highlight movement square above
-        ctx.strokeRect( newCol * TILE_SIZE, (row - offset + 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-        // Highlight movement square below
-        ctx.strokeRect( newCol * TILE_SIZE, (row + offset) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-        offset++;
-      }
-      // Right half
-      else {
-        // Highlight movement square above
-        ctx.strokeRect( (newCol - 1) * TILE_SIZE, (row - offset + 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-        // Highlight movement square below
-        ctx.strokeRect( (newCol - 1) * TILE_SIZE, (row + offset) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-        offset--;
+    for (var row = this.loc.row - this.spd, endRow = this.loc.row + this.spd; row <= endRow; row++) {
+      for (var col = this.loc.col - this.spd, endCol = this.loc.col + this.spd; col <= endCol; col++) {
+        if (this.inMoveRange(row, col)) {
+          ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          ctx.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
       }
     }
-
-    // Highlight last square
-    ctx.strokeRect( newCol * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   };
 
   /**
    * Draw the unit's attack range to the board
+   * Function should overwritten if it is different from the base drawAtkRange function
    * @param ctx The canvas context to draw on
    */
   this.drawAtkRange = function(ctx) {
+    // Highlight movement outline
+    ctx.lineWidth   = 2;
+    ctx.fillStyle   = 'rgba(186, 7, 37, .2)';
+    ctx.strokeStyle = '#BA0725';
 
+    for (var row = this.loc.row - this.spd, endRow = this.loc.row + this.spd; row <= endRow; row++) {
+      for (var col = this.loc.col - this.spd, endCol = this.loc.col + this.spd; col <= endCol; col++) {
+        if (this.inAtkRange(row, col)) {
+          ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          ctx.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
   };
 
   /**
@@ -463,11 +467,11 @@ function Unit() {
 }
 
 
-//  CCCCC  LL        AAA    SSSSS   SSSSS  EEEEEEE  SSSSS  
-// CC    C LL       AAAAA  SS      SS      EE      SS      
-// CC      LL      AA   AA  SSSSS   SSSSS  EEEEE    SSSSS  
-// CC    C LL      AAAAAAA      SS      SS EE           SS 
-//  CCCCC  LLLLLLL AA   AA  SSSSS   SSSSS  EEEEEEE  SSSSS  
+//  CCCCC  LL        AAA    SSSSS   SSSSS  EEEEEEE  SSSSS
+// CC    C LL       AAAAA  SS      SS      EE      SS
+// CC      LL      AA   AA  SSSSS   SSSSS  EEEEE    SSSSS
+// CC    C LL      AAAAAAA      SS      SS EE           SS
+//  CCCCC  LLLLLLL AA   AA  SSSSS   SSSSS  EEEEEEE  SSSSS
 /**
  * Warrior class
  * @param color The color to assign the unit
@@ -476,7 +480,7 @@ function Warrior(color, loc) {
   this.color = color;
   this.type  = WARRIOR;
   this.loc   = loc;
-  
+
   this.hp    = 3;
   this.spd   = 2;
   this.rng   = 1;
@@ -521,6 +525,42 @@ function Wizard(color, loc, spell) {
   this.attack = function() {
     return;
   };
+
+  /**
+   * Draw the unit's attack range to the board
+   * @param ctx The canvas context to draw on
+   */
+  this.drawAtkRange = function(ctx) {
+    // Highlight movement outline
+    ctx.lineWidth   = 2;
+    ctx.fillStyle   = 'rgba(7, 186, 31, .2)';
+    ctx.strokeStyle = '#07BA1F';
+
+    if (this.spell === ORTH) {
+      for (var i = 0; i < LENGTH; i++) {
+        ctx.fillRect(i * TILE_SIZE, this.loc.row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        if (i !== this.loc.row) {
+          ctx.fillRect(this.loc.col * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+    else if (this.spell === DIAG) {
+      var row1, row2
+      for (var i = 0; i < LENGTH; i++) {
+        row1 = this.loc.row - (this.loc.col - i);
+        row2 = this.loc.row + (this.loc.col - i);
+
+        if (row1 < LENGTH && row1 >= 0) {
+          ctx.fillRect(i * TILE_SIZE, row1 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+
+        if (row2 < LENGTH && row2 >= 0 && row1 != row2) {
+          ctx.fillRect(i * TILE_SIZE, row2 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+  };
 }
 Wizard.prototype = new Unit(); // set up inheritance
 
@@ -539,27 +579,27 @@ function populate_boards() {
   // add light units to board
   var row = 0;
   for(var i=0; i<LENGTH; i++){
-    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, "orth") }
+    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, ORTH) }
     if(i==1){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==2){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
     if(i==3){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==4){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
     if(i==5){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
     if(i==6){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
-    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, "horz") }
+    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, DIAG) }
   }
 
   // add dark units to board
   row = 7
   for(var i=0; i<LENGTH; i++){
-    if(i==0){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}) }
+    if(i==0){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}, DIAG) }
     if(i==1){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
     if(i==2){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
     if(i==3){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
     if(i==4){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
     if(i==5){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
     if(i==6){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
-    if(i==7){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}) }
+    if(i==7){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}, ORTH) }
   }
 }
 
