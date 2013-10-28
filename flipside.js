@@ -532,24 +532,30 @@ Wizard.prototype = new Unit(); // set up inheritance
 
 // =========================================================
 
-// Steven is this what you are thinking for the object hierarchy of units?
-var light_units = new Array(
-  // Expected parameters are: (starting_loc, wizard type)
-    wizardD  = new Wizard(),
-    wizardO  = new Wizard(),
-    warrior1 = new Warrior(),
-    warrior2 = new Warrior(),
-    warrior3 = new Warrior(),
-    archer1  = new Archer(),
-    archer2  = new Archer(),
-    archer3  = new Archer()
-  );
-var dark_units = new Array(
+function populate_boards() {
+  // add light units to board
+  for(var i=0; i<LENGTH; i++){
+    if(i=0){ whiteBoard[0][i].Tile.unit=new Wizard(WHITE) }
+    if(i=1){ whiteBoard[0][i].Tile.unit=new Warrior(WHITE) }
+    if(i=2){ whiteBoard[0][i].Tile.unit=new Archer(WHITE) }
+    if(i=3){ whiteBoard[0][i].Tile.unit=new Warrior(WHITE) }
+    if(i=4){ whiteBoard[0][i].Tile.unit=new Archer(WHITE) }
+    if(i=5){ whiteBoard[0][i].Tile.unit=new Warrior(WHITE) }
+    if(i=6){ whiteBoard[0][i].Tile.unit=new Archer(WHITE) }
+    if(i=7){ whiteBoard[0][i].Tile.unit=new Wizard(WHITE) }
+  }
 
-  );
-
-function populate_board() {
-
+  // add dark units to board
+  for(var i=0; i<LENGTH; i++){
+    if(i=0){ blackBoard[7][i].Tile.unit=new Wizard(BLACK) }
+    if(i=1){ blackBoard[7][i].Tile.unit=new Warrior(BLACK) }
+    if(i=2){ blackBoard[7][i].Tile.unit=new Archer(BLACK) }
+    if(i=3){ blackBoard[7][i].Tile.unit=new Warrior(BLACK) }
+    if(i=4){ blackBoard[7][i].Tile.unit=new Archer(BLACK) }
+    if(i=5){ blackBoard[7][i].Tile.unit=new Warrior(BLACK) }
+    if(i=6){ blackBoard[7][i].Tile.unit=new Archer(BLACK) }
+    if(i=7){ blackBoard[7][i].Tile.unit=new Wizard(BLACK) }
+  }
 }
 
 /**
@@ -558,6 +564,7 @@ function populate_board() {
 function reset() {
   whiteBoard.reset();
   blackBoard.reset();
+  populate_boards();
   drawBoards();
 }
 
