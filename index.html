@@ -1,39 +1,20 @@
 <html>
 <head>
 	<title>FlipSide Demo</title>
-	<style>
-	canvas {
-		margin: 25px;
-		border: 1px solid black;
-		float: left;
-	}
-	.buttons {
-		position: absolute;
-		top: 100px;
-		right: 100px;
-	}
-	.button {
-		padding: 10px;
-		background: gray;
-		border: 1px solid black;
-		-webkit-border-radius: 5px;
-		-moz-border-radius: 5px;
-		border-radius: 5px;
-		margin: 13px;
-		cursor: pointer;
-	}
-	.button.active {
-		border: 1px solid red;
-		background: LightGray;
-	}
-	</style>
+	<link rel=StyleSheet href="index.css" type="text/css" media="screen">
 	<script src="jquery.1.10.2.min.js"></script>
 </head>
 <body>
 	<canvas id="white" width="400" height="400"></canvas>
 	<canvas id="black" width="400" height="400"></canvas>
-	<div class="buttons">
-		<div class="button" onclick="reset();">Reset Boards</div>
+
+	<div class="ui_element actions_left">
+		<span class="info">Actions remaining</span></br>
+		<span class="ui_value" id="actions_left">4</span>
+	</div>
+	<div class="ui_element current_turn">
+		<span class="info">Current Turn</span></br>
+		<span class="ui_value" id="current_player">white</span>
 	</div>
 	<script src="flipside.js"></script>
 </body>

@@ -17,9 +17,14 @@ var WARRIOR      = 'warrior';
 var ARCHER       = 'archer';
 var WIZARD       = 'wizard';
 var ORTH         = 'orth';
-var DIAG         = 'diag'
+var DIAG         = 'diag';
+
+var MAX_ACTIONS  = 4;       // actions allowed per turn
+
 
 // Variables
+var num_actions  = 0;
+
 var whiteBoard   = {};
 var blackBoard   = {};
 var canvasL      = document.getElementById('white');
@@ -28,6 +33,30 @@ var ctxL         = canvasL.getContext('2d');
 var ctxB         = canvasB.getContext('2d');
 var currentTurn  = WHITE;  // The color of the player whose turn it currently is
 var selectedUnit = {};     // The currently selected unit
+
+/**
+ * Helper function - increment action count
+ */
+function incrementAction(){
+  num_actions++;
+  document.getElementById('actions_left').innerHTML=MAX_ACTIONS - num_actions;
+}
+/**
+ * Helper function - reset action count
+ */
+function resetActions(){
+  num_actions=0;
+  document.getElementById('actions_left').innerHTML=MAX_ACTIONS;
+}
+
+/**
+ * Helper function - switch current player
+ */
+function switchPlayer(){
+  resetActions();
+  currentTurn = (currentTurn === WHITE ? BLACK : WHITE);
+  document.getElementById('current_player').innerHTML=currentTurn;
+}
 
 /**
  * Helper function - determine if an object is empty
@@ -68,36 +97,44 @@ clickHandler = function(event, boardColor) {
   var tile = board.board[row][col];
 
   // select own unit
-  if (isEmpty(selectedUnit) && tile.unit !== null && tile.unit.color === currentTurn) {
+  if (isEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color === currentTurn) {
     selectedUnit = tile.unit;
-    selectedUnit.isSelected = true;
   }
   // move to empty square
-  else if (isNotEmpty(selectedUnit) && tile.unit === null && selectedUnit.inMoveRange(row, col)) {
+  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && selectedUnit.inMoveRange(row, col)) {
+    var preRow = selectedUnit.loc.row;
+    var preCol = selectedUnit.loc.col;
     if (selectedUnit.move(row, col)) {
+      board.board[preRow][preCol].unit = {};
+      board.board[row][col].unit = selectedUnit;
       // unit moved successfully, switch turns
-      curentTurn = (currentTurn === WHITE ? BLACK : WHITE);
+      incrementAction();
     }
+    selectedUnit = {};
   }
   // attack enemy units
-  else if (isNotEmpty(selectedUnit) && tile.unit !== null && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
+  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
     if (selectedUnit.attack(row, col)) {
       // unit attacked successfully, switch turns
-      curentTurn = (currentTurn === WHITE ? BLACK : WHITE);
+      incrementAction();
     }
   }
   // select a different own unit
-  else if (isNotEmpty(selectedUnit) && tile.unit !== null && tile.unit.color === currentTurn) {
-    selectedUnit.isSelected = false;
+  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && tile.unit.color === currentTurn) {
     selectedUnit = tile.unit;
-    selectedUnit.isSelected = true;
   }
 
-  console.log(selectedUnit);
-  drawBoards();
+console.log(num_actions);
+  if(num_actions == MAX_ACTIONS){
+    switchPlayer();
+  }
 
-  selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
-  selectedUnit.drawAtkRange(window[selectedUnit.color+'Board'].ctx);
+  
+  drawBoards();
+  if(isNotEmpty(selectedUnit)){
+    selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
+    selectedUnit.drawAtkRange(window[selectedUnit.color+'Board'].ctx);
+  }
 
 };
 canvasL.onclick = function(event) {clickHandler(event, WHITE)};
@@ -162,6 +199,13 @@ assetLoader = new function() {
   }
 }
 
+
+//  TTTTTTT    IIIII    LL         EEEEEEE 
+//    TTT       III     LL         EE      
+//    TTT       III     LL         EEEEE   
+//    TTT       III     LL         EE      
+//    TTT      IIIII    LLLLLLL    EEEEEEE 
+//        
 /**
  * Tile object
  * @param color The color type for the tile (white, black)
@@ -313,11 +357,11 @@ function Unit() {
   this.isSelected  = false;  // if the unit is currently selected
 
   // action stats
-  var actionLimit  = 2;      // how many actions the unit can perform per turn
-  var moveLimit    = 2;      // how many move actions the unit can perform per turn
-  var atkLimit     = 1;      // how many attack actions the unit can perform per turn
-  var moveActions  = 0;      // the current move actions the unit has performed this turn
-  var atkActions   = 0;      // the current attack actions the unit has performed this turn
+  this.actionLimit  = 2;      // how many actions the unit can perform per turn
+  this.moveLimit    = 2;      // how many move actions the unit can perform per turn
+  this.atkLimit     = 1;      // how many attack actions the unit can perform per turn
+  this.moveActions  = 0;      // the current move actions the unit has performed this turn
+  this.atkActions   = 0;      // the current attack actions the unit has performed this turn
 
   // unit stats
   this.hp           = 0;     // health
@@ -385,7 +429,7 @@ function Unit() {
     if (this.canMove() && this.inMoveRange(row, col)) {
       this.loc.row = row;
       this.loc.col = col;
-      moveActions++;
+      this.moveActions++;
       return true;
     }
 
@@ -404,7 +448,7 @@ function Unit() {
     if (this.canAtack() && this.inAtkRange(row, col)) {
       // do something
 
-      atkActions++;
+      this.atkActions++;
       return true;
     }
 
@@ -417,7 +461,7 @@ function Unit() {
    * @return True if the unit can move, false otherwise.
    */
   this.canMove = function() {
-    return moveActions < moveLimit;
+    return this.moveActions < this.moveLimit;
   };
 
   /**
@@ -426,7 +470,7 @@ function Unit() {
    * @return True if the unit can use it's power, false otherwise
    */
   this.canAttack = function() {
-    return atkActions < atkLimit;
+    return this.atkActions < this.atkLimit;
   };
 
   /**
@@ -461,8 +505,8 @@ function Unit() {
    * Reset the unit's move and power actions
    */
   this.resetActions = function() {
-    moveActions  = 0;
-    atkActions   = 0;
+    this.moveActions  = 0;
+    this.atkActions   = 0;
   };
 }
 
