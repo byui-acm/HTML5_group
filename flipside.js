@@ -1,61 +1,99 @@
 // =========================================================
 
-// BBBBB       OOOOO       AAA      RRRRRR     DDDDD   
-// BB   B     OO   OO     AAAAA     RR   RR    DD  DD  
-// BBBBBB     OO   OO    AA   AA    RRRRRR     DD   DD 
-// BB   BB    OO   OO    AAAAAAA    RR  RR     DD   DD 
-// BBBBBB      OOOO0     AA   AA    RR   RR    DDDDDD  
+// BBBBB       OOOOO       AAA      RRRRRR     DDDDD
+// BB   B     OO   OO     AAAAA     RR   RR    DD  DD
+// BBBBBB     OO   OO    AA   AA    RRRRRR     DD   DD
+// BB   BB    OO   OO    AAAAAAA    RR  RR     DD   DD
+// BBBBBB      OOOO0     AA   AA    RR   RR    DDDDDD
 
 // =========================================================
 
 // Constants
-var LENGTH        = 8;        // size of the board
-var TILE_SIZE     = 50;       // size of a tile
-var WHITE         = 'white';
-var BLACK         = 'black';
-var WARRIOR       = 'warrior';
-var ARCHER        = 'archer';
-var WIZARD        = 'wizard';
+var LENGTH       = 8;        // size of the board
+var TILE_SIZE    = 50;       // size of a tile
+var WHITE        = 'white';
+var BLACK        = 'black';
+var WARRIOR      = 'warrior';
+var ARCHER       = 'archer';
+var WIZARD       = 'wizard';
 
 // Variables
-var whiteBoard    = {};
-var blackBoard    = {};
-var canvasL       = document.getElementById('white');
-var canvasB       = document.getElementById('black');
-var ctxL          = canvasL.getContext('2d');
-var ctxB          = canvasB.getContext('2d');
-var clickFunction = {};       // the function to perform on a click
+var whiteBoard   = {};
+var blackBoard   = {};
+var canvasL      = document.getElementById('white');
+var canvasB      = document.getElementById('black');
+var ctxL         = canvasL.getContext('2d');
+var ctxB         = canvasB.getContext('2d');
+var currentTurn  = WHITE;  // The color of the player whose turn it currently is
+var selectedUnit = {};     // The currently selected unit
+
+/**
+ * Helper function - determine if an object is empty
+ * @param object to check
+ */
+function isEmpty(obj) {
+  var name;
+  for (name in obj) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Helper function - determine if an object is not empty
+ * @param object to check
+ */
+function isNotEmpty(obj) {
+  var name;
+  for (name in obj) {
+    return true;
+  }
+  return false;
+}
 
 /**
  * Onclick event
  * @param event The mouse event object
  */
-clickHandler = function(event) {
+clickHandler = function(event, boardColor) {
   var mouseX = event.offsetX || event.layerX;
   var mouseY = event.offsetY || event.layerY;
 
-  var col = Math.floor(mouseY / TILE_SIZE);
-  var row = Math.floor(mouseX / TILE_SIZE);
+  var row = Math.floor(mouseY / TILE_SIZE);
+  var col = Math.floor(mouseX / TILE_SIZE);
 
-  clickFunction(row, col);
+  var board = window[boardColor+'Board'];
+  var tile = board.board[row][col];
+
+  // select own unit
+  if (isEmpty(selectedUnit) && tile.unit !== null && tile.unit.color === currentTurn) {
+    selectedUnit = tile.unit;
+    selectedUnit.isSelected = true;
+  }
+  // move to empty square
+  else if (isNotEmpty(selectedUnit) && tile.unit === null && selectedUnit.inMoveRange(row, col)) {
+    if (selectedUnit.move(row, col)) {
+      // unit moved successfully, switch turns
+      curentTurn = (currentTurn === WHITE ? BLACK : WHITE);
+    }
+  }
+  // attack enemy units
+  else if (isNotEmpty(selectedUnit) && tile.unit !== null && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
+    if (selectedUnit.attack(row, col)) {
+      // unit attacked successfully, switch turns
+      curentTurn = (currentTurn === WHITE ? BLACK : WHITE);
+    }
+  }
+  // select a different own unit
+  else if (isNotEmpty(selectedUnit) && tile.unit !== null && tile.unit.color === currentTurn) {
+    selectedUnit.isSelected = false;
+    selectedUnit = tile.unit;
+    selectedUnit.isSelected = true;
+  }
+
 };
-canvasL.onclick = function(event) {clickHandler(event)};
-canvasB.onclick = function(event) {clickHandler(event)};
-clickFunction = flipRookTiles;
-
-/**
- * Change the click handler for flipping
- * @param name The id attribute of the button to activate
- * @param func The function object to assign as the new clickFunction
- */
-function changeClickHandler(name, func) {
-  clickFunction = func;
-  $('.button').each(function() {
-    $( this ).removeClass('active');
-  });
-
-  $('#'+name).addClass('active');
-}
+canvasL.onclick = function(event) {clickHandler(event, WHITE)};
+canvasB.onclick = function(event) {clickHandler(event, BLACK)};
 
 /**
  * Asset pre-loader object. Loads all images and sounds
@@ -232,43 +270,44 @@ function flipBishTiles(row, col) {
 
 // =========================================================
 
-// UU   UU    NN   NN    IIIII    TTTTTTT     SSSSS  
-// UU   UU    NNN  NN     III       TTT      SS      
-// UU   UU    NN N NN     III       TTT       SSSSS  
-// UU   UU    NN  NNN     III       TTT           SS 
-//  UUUUU     NN   NN    IIIII      TTT       SSSSS  
+// UU   UU    NN   NN    IIIII    TTTTTTT     SSSSS
+// UU   UU    NNN  NN     III       TTT      SS
+// UU   UU    NN N NN     III       TTT       SSSSS
+// UU   UU    NN  NNN     III       TTT           SS
+//  UUUUU     NN   NN    IIIII      TTT       SSSSS
 
 // =========================================================
-                                                  
+
 /**
  * Unit base class
  */
 function Unit() {
   // unit info
-  this.loc         = {     // current row and column on the board
+  this.loc         = {       // current row and column on the board
     'row'  : 0,
     'col'  : 0
   };
-  this.color       = '';   // white, black
-  this.type        = '';   // warrior, archer, wizard
+  this.color       = '';     // white, black
+  this.type        = '';     // warrior, archer, wizard
 
-  this.start_loc   = {     // starting placement of unit on board
+  this.start_loc   = {       // starting placement of unit on board
     'row'  : 0,
     'col'  : 0
-  }
+  };
+  this.isSelected  = false;  // if the unit is currently selected
 
   // action stats
-  var actionLimit  = 2;    // how many actions the unit can perform per turn
-  var moveLimit    = 2;    // how many move actions the unit can perform per turn
-  var atkLimit     = 1;    // how many attack actions the unit can perform per turn
-  var moveActions  = 0;    // the current move actions the unit has performed this turn
-  var atkActions   = 0;    // the current attack actions the unit has performed this turn
+  var actionLimit  = 2;      // how many actions the unit can perform per turn
+  var moveLimit    = 2;      // how many move actions the unit can perform per turn
+  var atkLimit     = 1;      // how many attack actions the unit can perform per turn
+  var moveActions  = 0;      // the current move actions the unit has performed this turn
+  var atkActions   = 0;      // the current attack actions the unit has performed this turn
 
   // unit stats
-  this.hp           = 0;    // health
-  this.spd          = 0;    // movement speed (how far unit can move)
-  this.rng          = 0;    // attack range (how far unit can attack)
-  this.dmg          = {     // damage range, low-high
+  this.hp           = 0;     // health
+  this.spd          = 0;     // movement speed (how far unit can move)
+  this.rng          = 0;     // attack range (how far unit can attack)
+  this.dmg          = {      // damage range, low-high
     'low'  : 0,
     'high' : 0
   };
@@ -279,6 +318,57 @@ function Unit() {
    */
   this.draw = function(ctx) {
     ctx.drawImage(assetLoader.imgs[this.type], this.loc.row * TILE_SIZE, this.loc.col * TILE_SIZE);
+
+    if (this.isSelected) {
+      this.drawMoveRange(ctx);
+      this.drawAtkRange(ctx);
+    }
+  };
+
+  /**
+   * Draw the unit's move range to the board
+   * @param ctx The canvas context to draw on
+   */
+  this.drawMoveRange = function(ctx) {
+    // Highlight movement outline
+    var offset = 0;
+    var newCol;
+    for (var i = 0; i <= this.spd * 2; i++) {
+      newCol = this.loc.col - (this.spd - i);
+      ctx.strokeStyle = "rgb(0, 255, 0)";
+
+      // Left half
+      if (i <= this.spd) {
+        // Highlight movement square above
+        ctx.strokeRect( newCol * TILE_SIZE, (row - offset + 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        // Highlight movement square below
+        ctx.strokeRect( newCol * TILE_SIZE, (row + offset) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        offset++;
+      }
+      // Right half
+      else {
+        // Highlight movement square above
+        ctx.strokeRect( (newCol - 1) * TILE_SIZE, (row - offset + 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        // Highlight movement square below
+        ctx.strokeRect( (newCol - 1) * TILE_SIZE, (row + offset) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        offset--;
+      }
+    }
+
+    // Highlight last square
+    ctx.strokeRect( newCol * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  };
+
+  /**
+   * Draw the unit's attack range to the board
+   * @param ctx The canvas context to draw on
+   */
+  this.drawAtkRange = function(ctx) {
+
   };
 
   /**
@@ -433,12 +523,12 @@ Wizard.prototype = new Unit(); // set up inheritance
 
 // =========================================================
 
-//   GGGG    AAA   MM    MM EEEEEEE    LL       OOOOO    GGGG  IIIII  CCCCC  
-//  GG  GG  AAAAA  MMM  MMM EE         LL      OO   OO  GG  GG  III  CC    C 
-// GG      AA   AA MM MM MM EEEEE      LL      OO   OO GG       III  CC      
-// GG   GG AAAAAAA MM    MM EE         LL      OO   OO GG   GG  III  CC    C 
-//  GGGGGG AA   AA MM    MM EEEEEEE    LLLLLLL  OOOO0   GGGGGG IIIII  CCCCC  
-                                                                          
+//   GGGG    AAA   MM    MM EEEEEEE    LL       OOOOO    GGGG  IIIII  CCCCC
+//  GG  GG  AAAAA  MMM  MMM EE         LL      OO   OO  GG  GG  III  CC    C
+// GG      AA   AA MM MM MM EEEEE      LL      OO   OO GG       III  CC
+// GG   GG AAAAAAA MM    MM EE         LL      OO   OO GG   GG  III  CC    C
+//  GGGGGG AA   AA MM    MM EEEEEEE    LLLLLLL  OOOO0   GGGGGG IIIII  CCCCC
+
 
 // =========================================================
 
