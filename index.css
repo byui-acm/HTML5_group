@@ -49,7 +49,7 @@ canvas {
 	top: 130px;
 	right: 100px;
 }
-.button {
+button {
 	padding: 10px;
 	background: gray;
 	border: 1px solid black;

@@ -8,14 +8,21 @@
 	<canvas id="white" width="400" height="400"></canvas>
 	<canvas id="black" width="400" height="400"></canvas>
 
+	<!-- current player's remaining number of actions -->
 	<div class="ui_element actions_left">
 		<span class="info">Actions remaining</span></br>
 		<span class="ui_value" id="actions_left">4</span>
 	</div>
+
+	<!-- displays whose turn it is -->
 	<div class="ui_element current_turn">
 		<span class="info">Current Turn</span></br>
 		<span class="ui_value" id="current_player">white</span>
 	</div>
+
+	<!-- flip tiles button for wizard attack -->
+	<button id="wizard_flip" onclick="javascript:blah();" style="display:none;">Flip Spell</button>
+
 	<script src="flipside.js"></script>
 </body>
 </html>

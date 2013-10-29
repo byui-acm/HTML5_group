@@ -97,11 +97,21 @@ clickHandler = function(event, boardColor) {
   var tile = board.board[row][col];
 
   // select own unit
-  if (isEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color === currentTurn && tile.unit.hasActions()) {
+  if (
+    isEmpty(selectedUnit) 
+    && isNotEmpty(tile.unit) 
+    && tile.unit.color === currentTurn 
+    && tile.unit.hasActions()
+    ) {
     selectedUnit = tile.unit;
   }
   // move to empty square
-  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && selectedUnit.inMoveRange(row, col)) {
+  else if (
+    isNotEmpty(selectedUnit) 
+    && isEmpty(tile.unit) 
+    && selectedUnit.inMoveRange(row, col)
+    && (selectedUnit.loc.board == tile.loc)
+    ) {
     var preRow = selectedUnit.loc.row;
     var preCol = selectedUnit.loc.col;
     if (selectedUnit.move(row, col)) {
@@ -136,6 +146,11 @@ clickHandler = function(event, boardColor) {
     selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
     selectedUnit.drawAtkRange(window[selectedUnit.color+'Board'].ctx);
   }
+
+  document.getElementById('wizard_flip').style.display = "none"
+  if(isNotEmpty(selectedUnit))
+    if(selectedUnit.type === 'wizard')
+      document.getElementById('wizard_flip').style.display = ""
 
 };
 canvasL.onclick = function(event) {clickHandler(event, WHITE)};
@@ -220,7 +235,7 @@ function Tile(color) {
   this.type = color;          // white, black
   this.img  = color+'_tile';  // key to the assetLoader.imgs object
   this.unit = {};             // reference to the Unit object that is on the tile
-
+  this.loc  = WHITE;          // white by default, indicates if tile is on the white or black board
   /**
    * Draw the tile
    * @param ctx The canvas context to draw to
@@ -355,7 +370,8 @@ function Unit() {
   // unit info
   this.loc         = {       // current row and column on the board
     'row'  : 0,
-    'col'  : 0
+    'col'  : 0,
+    'board': WHITE           // default board is white
   };
   this.color       = '';     // white, black
   this.type        = '';     // warrior, archer, wizard
@@ -374,6 +390,13 @@ function Unit() {
   this.spd          = 0;     // movement speed (how far unit can move)
   this.rng          = 0;     // attack range (how far unit can attack)
   this.dmg          = 0;     // damage
+
+  this.switchBoard = function(){
+    if(this.loc.board === WHITE)
+      this.loc.board = BLACK;
+    else
+      this.loc.board = WHITE;
+  }
 
   /**
    * Draw the unit to the board
@@ -647,27 +670,27 @@ function populate_boards() {
   // add light units to board
   var row = 0;
   for(var i=0; i<LENGTH; i++){
-    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, ORTH) }
-    if(i==1){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
-    if(i==2){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
-    if(i==3){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
-    if(i==4){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
-    if(i==5){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i}) }
-    if(i==6){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i}) }
-    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i}, DIAG) }
+    if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i, board: WHITE}, ORTH) }
+    if(i==1){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==2){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==3){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==4){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==5){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==6){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i, board: WHITE}) }
+    if(i==7){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i, board: WHITE}, DIAG) }
   }
 
   // add dark units to board
   row = 7
   for(var i=0; i<LENGTH; i++){
-    if(i==0){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}, DIAG) }
-    if(i==1){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
-    if(i==2){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
-    if(i==3){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
-    if(i==4){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
-    if(i==5){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i}) }
-    if(i==6){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i}) }
-    if(i==7){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i}, ORTH) }
+    if(i==0){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i, board: BLACK}, DIAG) }
+    if(i==1){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==2){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==3){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==4){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==5){ blackBoard.board[row][i].unit=new Warrior(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==6){ blackBoard.board[row][i].unit=new Archer(BLACK, {row: row, col: i, board: BLACK}) }
+    if(i==7){ blackBoard.board[row][i].unit=new Wizard(BLACK, {row: row, col: i, board: BLACK}, ORTH) }
   }
 }
 
