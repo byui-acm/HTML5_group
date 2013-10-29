@@ -97,7 +97,7 @@ clickHandler = function(event, boardColor) {
   var tile = board.board[row][col];
 
   // select own unit
-  if (isEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color === currentTurn) {
+  if (isEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color === currentTurn && tile.unit.hasActions()) {
     selectedUnit = tile.unit;
   }
   // move to empty square
@@ -105,31 +105,32 @@ clickHandler = function(event, boardColor) {
     var preRow = selectedUnit.loc.row;
     var preCol = selectedUnit.loc.col;
     if (selectedUnit.move(row, col)) {
+      // unit moved successfully
       board.board[preRow][preCol].unit = {};
       board.board[row][col].unit = selectedUnit;
-      // unit moved successfully, switch turns
       incrementAction();
     }
     selectedUnit = {};
   }
   // attack enemy units
-  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
+  else if (isNotEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
     if (selectedUnit.attack(row, col)) {
-      // unit attacked successfully, switch turns
+      // unit attacked successfully
       incrementAction();
     }
+    selectedUnit = {};
   }
   // select a different own unit
-  else if (isNotEmpty(selectedUnit) && isEmpty(tile.unit) && tile.unit.color === currentTurn) {
+  else if (isNotEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color === currentTurn) {
     selectedUnit = tile.unit;
   }
 
-console.log(num_actions);
+  console.log(num_actions);
   if(num_actions == MAX_ACTIONS){
     switchPlayer();
   }
 
-  
+
   drawBoards();
   if(isNotEmpty(selectedUnit)){
     selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
@@ -154,11 +155,16 @@ hoverHanlder = function(event) {
 assetLoader = new function() {
   // images
   this.imgs        = {
-    'white_tile' : 'imgs/white-tile.png',
-    'black_tile' : 'imgs/black-tile.png',
-    'warrior'    : 'imgs/warrior.png',
-    'archer'     : 'imgs/warrior.png',
-    'wizard'     : 'imgs/warrior.png'
+    'white_tile'        : 'imgs/white-tile.png',
+    'black_tile'        : 'imgs/black-tile.png',
+    'warrior_white'     : 'imgs/warrior-white.png',
+    'archer_white'      : 'imgs/archer-white.png',
+    'wizard_orth_white' : 'imgs/wizard-orth-white.png',
+    'wizard_diag_white' : 'imgs/wizard-diag-white.png',
+    'warrior_black'     : 'imgs/warrior-black.png',
+    'archer_black'      : 'imgs/archer-black.png',
+    'wizard_orth_black' : 'imgs/wizard-orth-black.png',
+    'wizard_diag_black' : 'imgs/wizard-diag-black.png'
   };
 
   // sounds
@@ -200,12 +206,12 @@ assetLoader = new function() {
 }
 
 
-//  TTTTTTT    IIIII    LL         EEEEEEE 
-//    TTT       III     LL         EE      
-//    TTT       III     LL         EEEEE   
-//    TTT       III     LL         EE      
-//    TTT      IIIII    LLLLLLL    EEEEEEE 
-//        
+//  TTTTTTT    IIIII    LL         EEEEEEE
+//    TTT       III     LL         EE
+//    TTT       III     LL         EEEEE
+//    TTT       III     LL         EE
+//    TTT      IIIII    LLLLLLL    EEEEEEE
+//
 /**
  * Tile object
  * @param color The color type for the tile (white, black)
@@ -371,10 +377,11 @@ function Unit() {
 
   /**
    * Draw the unit to the board
+   * Function should overwritten if it is different from the base draw function
    * @param ctx The canvas context to draw on
    */
   this.draw = function(ctx) {
-    ctx.drawImage(assetLoader.imgs[this.type], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
+    ctx.drawImage(assetLoader.imgs[this.type + '_' + this.color], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
   };
 
   /**
@@ -445,7 +452,7 @@ function Unit() {
    * @return True if the unit can use it's power, false otherwise
    */
   this.attack = function(row, col) {
-    if (this.canAtack() && this.inAtkRange(row, col)) {
+    if (this.canAttack() && this.inAtkRange(row, col)) {
       // do something
 
       this.atkActions++;
@@ -471,6 +478,15 @@ function Unit() {
    */
   this.canAttack = function() {
     return this.atkActions < this.atkLimit;
+  };
+
+  /**
+   * If the unit can has any actions left this turn
+   *
+   * @return True if the unit can use it's power, false otherwise
+   */
+  this.hasActions = function() {
+    return this.moveActions + this.atkActions < this.actionLimit;
   };
 
   /**
@@ -562,6 +578,14 @@ function Wizard(color, loc, spell) {
   this.spd   = 4;
 
   /**
+   * Draw the Wizards to the board
+   * @param ctx The canvas context to draw on
+   */
+  this.draw = function(ctx) {
+    ctx.drawImage(assetLoader.imgs[this.type + '_' + this.spell + '_' + this.color], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
+  };
+
+  /**
    * Performs the Wizards flip attack
    *
    * @return True if the Wizard can use it's power, false otherwise
@@ -571,7 +595,7 @@ function Wizard(color, loc, spell) {
   };
 
   /**
-   * Draw the unit's attack range to the board
+   * Draw the Wizards's attack range to the board
    * @param ctx The canvas context to draw on
    */
   this.drawAtkRange = function(ctx) {

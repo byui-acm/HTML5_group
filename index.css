@@ -6,14 +6,16 @@
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	text-align: center;
+	cursor: default;
+	width: 130px;
 }
 .actions_left{
-	top: 40px;
-	right: 25px;
+	top: 450px;
+	left: 465px;
 }
 .current_turn{
-	top:40px;
-	right:185px;
+	top:450px;
+	left:305;
 }
 .ui_value{
 	font-family: verdana, sans-serif;
@@ -29,8 +31,14 @@
 	font-size: 14px;
 	font-weight: bold;
 }
-
-
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 canvas {
 	margin: 25px;
 	border: 1px solid black;
