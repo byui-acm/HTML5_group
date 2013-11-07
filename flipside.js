@@ -195,8 +195,6 @@ hoverHanlder = function(event, boardColor) {
   ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   ctx.restore();
 }
-canvasL.onmousemove = function(event) {hoverHanlder(event, WHITE)};
-canvasB.onmousemove = function(event) {hoverHanlder(event, BLACK)};
 
 /**
  * Flip button click handler
@@ -231,7 +229,10 @@ assetLoader = new function() {
   };
 
   // sounds
-  this.sounds      = {};
+  this.sounds      = {
+    'menu'              : 'sounds/Haply.mp3',
+    'bg'                : 'sounds/royal_strings.mp3'
+  };
 
   var assetsLoaded = 0;                                // how many assets have been loaded
   var numImgs      = Object.keys(this.imgs).length;    // total number of image assets
@@ -243,13 +244,27 @@ assetLoader = new function() {
    * Ensure all assets are loaded before using them
    * @param self Reference to the assetLoader object
    */
-  function assetLoaded(self) {
+  function assetLoaded(self, dic, name) {
     assetsLoaded++;
+    self[dic][name].status = 'loaded';
+    window.assetProgress(assetsLoaded, self.totalAssest);
     if (assetsLoaded === self.totalAssest) {
       self.isReady = true;
-      window.startGame();
+      clearInterval(self.checkAudio);
+      window.mainMenu();
     }
   };
+
+  /**
+   * Check the status of all sound files for being loaded
+   */
+  function checkAudioStatus() {
+    for (var sound in this.sounds) {
+      if (this.sounds.hasOwnProperty(sound) && this.sounds[sound].status === 'loading' && this.sounds[sound].readyState === 4) {
+        assetLoaded(this, 'sounds', sound);
+      }
+    }
+  }
 
   // create asset, set callback for asset loading, set asset source
   var self = this;
@@ -257,15 +272,19 @@ assetLoader = new function() {
   for (img in this.imgs) {
     src = this.imgs[img];
     this.imgs[img] = new Image();
-    this.imgs[img].onload = function() { assetLoaded(self); };
+    this.imgs[img].status = 'loading';
+    this.imgs[img].onload = function() { assetLoaded(self, 'imgs', img); };
     this.imgs[img].src = src;
   }
   for (sound in this.sounds) {
     src = this.sounds[sound];
     this.sounds[sound] = new Audio();
-    this.sounds[sound].onload = function() { assetLoaded(self); };
+    this.sounds[sound].status = 'loading';
     this.sounds[sound].src = src;
   }
+
+  var that = this;
+  this.checkAudio = setInterval(function() { checkAudioStatus.call(that); },1000);
 }
 
 
@@ -808,6 +827,52 @@ function populate_boards() {
 }
 
 /**
+ * Show asset loading progress
+ */
+function assetProgress(progress, total) {
+  var pBar = document.getElementById('p');
+  pBar.value = progress / total;
+  document.getElementById('percent').innerHTML = Math.round(pBar.value * 100) + "%";
+}
+
+/**
+ * Show the main menu
+ */
+function mainMenu() {
+  assetLoader.sounds.menu.play();
+  assetLoader.sounds.loop = true;
+
+  $('.progress').hide();
+  $('.main').show();
+
+  // Event handlers
+  $('.sound-on').click(function() {
+    if ($('.menu').css('display') == 'none')
+      assetLoader.sounds.bg.pause();
+    else
+      assetLoader.sounds.menu.pause();
+
+    $(this).hide();
+    $('.sound-off').show();
+  });
+  $('.sound-off').click(function() {
+    if ($('.menu').css('display') == 'none')
+      assetLoader.sounds.bg.play();
+    else
+      assetLoader.sounds.menu.play();
+
+    $(this).hide();
+    $('.sound-on').show();
+  });
+
+  $('.play').click(function() {
+    $('.menu').hide();
+    assetLoader.sounds.menu.pause();
+    startGame();
+  });
+}
+
+/**
  * Reset the game
  */
 function reset() {
@@ -825,4 +890,8 @@ function startGame() {
   blackBoard = new Board(BLACK);
   populate_boards();
   drawBoards();
+  canvasL.onmousemove = function(event) {hoverHanlder(event, WHITE)};
+  canvasB.onmousemove = function(event) {hoverHanlder(event, BLACK)};
+  assetLoader.sounds.menu.pause();
+  assetLoader.sounds.bg.play();
 }

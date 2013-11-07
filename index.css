@@ -1,3 +1,67 @@
+.menu {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	z-index: 5;
+	width: 97%;
+	height: 97%;
+	background-color: grey;
+}
+
+.main {
+	display: none;
+	font-size: 3em;
+	font-family: arial;
+	text-align: center;
+	padding: 3em;
+}
+.main > div {
+	margin: 40px;
+	cursor: pointer;
+}
+.main > div:hover {
+	color: yellow;
+}
+.main > .audio {
+	position: absolute;
+	margin: 0;
+	right: 10px;
+	top: 10px;
+	width: 30px;
+	height: 25px;
+	display: block;
+}
+
+.sound-on {
+	width: 30px;
+	height: 25px;
+	background-image: url('imgs/soundOn.png');
+	background-repeat: no-repeat;
+}
+
+.sound-off {
+	width: 30px;
+	height: 25px;
+	display: none;
+	background-image: url('imgs/soundOff.png');
+	background-repeat: no-repeat;
+}
+
+.progress {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	height: 240px;
+	margin-left: -125px;
+}
+#percent {
+	position: absolute;
+	left: 100px;
+}
+#p {
+	width: 250px;
+}
+
 .ui_element{
 	position: absolute;
 	background-color: #575757;
