@@ -46,6 +46,20 @@ function incrementAction(){
  */
 function resetActions(){
   num_actions=0;
+
+  // reset unit actions
+  for (var r = 0; r < LENGTH; r++) {
+    for (var c = 0; c < LENGTH; c++) {
+      unit1 = whiteBoard.board[r][c].unit;
+      unit2 = blackBoard.board[r][c].unit;
+
+      if (isNotEmpty(unit1))
+        unit1.resetActions();
+      if (isNotEmpty(unit2))
+        unit2.resetActions();
+    }
+  }
+
   document.getElementById('actions_left').innerHTML=MAX_ACTIONS;
 }
 
@@ -98,19 +112,19 @@ clickHandler = function(event, boardColor) {
 
   // select own unit
   if (
-    isEmpty(selectedUnit) 
-    && isNotEmpty(tile.unit) 
-    && tile.unit.color === currentTurn 
+    isEmpty(selectedUnit)
+    && isNotEmpty(tile.unit)
+    && tile.unit.color === currentTurn
     && tile.unit.hasActions()
     ) {
     selectedUnit = tile.unit;
   }
   // move to empty square
   else if (
-    isNotEmpty(selectedUnit) 
-    && isEmpty(tile.unit) 
+    isNotEmpty(selectedUnit)
+    && isEmpty(tile.unit)
     && selectedUnit.inMoveRange(row, col)
-    && (selectedUnit.loc.board == tile.loc)
+    && (selectedUnit.loc.board === tile.loc)
     ) {
     var preRow = selectedUnit.loc.row;
     var preCol = selectedUnit.loc.col;
@@ -126,6 +140,10 @@ clickHandler = function(event, boardColor) {
   else if (isNotEmpty(selectedUnit) && isNotEmpty(tile.unit) && tile.unit.color !== currentTurn && selectedUnit.inAtkRange(row, col)) {
     if (selectedUnit.attack(row, col)) {
       // unit attacked successfully
+      tile.unit.hp -= selectedUnit.dmg;
+      if (tile.unit.hp <= 0) {
+        tile.unit = {};
+      }
       incrementAction();
     }
     selectedUnit = {};
@@ -135,21 +153,19 @@ clickHandler = function(event, boardColor) {
     selectedUnit = tile.unit;
   }
 
-  console.log(num_actions);
   if(num_actions == MAX_ACTIONS){
     switchPlayer();
   }
 
-
   drawBoards();
   if(isNotEmpty(selectedUnit)){
-    selectedUnit.drawMoveRange(window[selectedUnit.color+'Board'].ctx);
-    selectedUnit.drawAtkRange(window[selectedUnit.color+'Board'].ctx);
+    selectedUnit.drawMoveRange(window[selectedUnit.loc.board+'Board'].ctx);
+    selectedUnit.drawAtkRange(window[selectedUnit.loc.board+'Board'].ctx);
   }
 
   document.getElementById('wizard_flip').style.display = "none"
   if(isNotEmpty(selectedUnit))
-    if(selectedUnit.type === 'wizard')
+    if(selectedUnit.type === 'wizard' && selectedUnit.canAttack())
       document.getElementById('wizard_flip').style.display = ""
 
 };
@@ -157,11 +173,43 @@ canvasL.onclick = function(event) {clickHandler(event, WHITE)};
 canvasB.onclick = function(event) {clickHandler(event, BLACK)};
 
 /**
- * Onclick event
+ * onHover event handler - highlight the currently hovered tile
  * @param event The mouse event object
  */
-hoverHanlder = function(event) {
+hoverHanlder = function(event, boardColor) {
+  var mouseX = event.offsetX || event.layerX;
+  var mouseY = event.offsetY || event.layerY;
 
+  var row = Math.floor(mouseY / TILE_SIZE);
+  var col = Math.floor(mouseX / TILE_SIZE);
+
+  ctx = window[boardColor+'Board'].ctx;
+
+  drawBoards();
+  if(isNotEmpty(selectedUnit)){
+    selectedUnit.drawMoveRange(window[selectedUnit.loc.board+'Board'].ctx);
+    selectedUnit.drawAtkRange(window[selectedUnit.loc.board+'Board'].ctx);
+  }
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, .4)';
+  ctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  ctx.restore();
+}
+canvasL.onmousemove = function(event) {hoverHanlder(event, WHITE)};
+canvasB.onmousemove = function(event) {hoverHanlder(event, BLACK)};
+
+/**
+ * Flip button click handler
+ * @param event The mouse event object
+ */
+flipClick = function(event) {
+  selectedUnit.attack();
+  incrementAction();
+  if(num_actions == MAX_ACTIONS){
+    switchPlayer();
+  }
+  selectedUnit = {};
+  document.getElementById('wizard_flip').style.display = "none";
 }
 
 /**
@@ -227,6 +275,7 @@ assetLoader = new function() {
 //    TTT       III     LL         EE
 //    TTT      IIIII    LLLLLLL    EEEEEEE
 //
+
 /**
  * Tile object
  * @param color The color type for the tile (white, black)
@@ -235,7 +284,22 @@ function Tile(color) {
   this.type = color;          // white, black
   this.img  = color+'_tile';  // key to the assetLoader.imgs object
   this.unit = {};             // reference to the Unit object that is on the tile
-  this.loc  = WHITE;          // white by default, indicates if tile is on the white or black board
+  this.loc  = color;          // white by default, indicates if tile is on the white or black board
+
+  /**
+   * Switch the tile and unit on the tile from one board to the other
+   */
+  this.switchBoard = function() {
+    if(this.loc === WHITE)
+      this.loc = BLACK;
+    else
+      this.loc = WHITE;
+
+    if (isNotEmpty(this.unit)) {
+      this.unit.switchBoard();
+    }
+  };
+
   /**
    * Draw the tile
    * @param ctx The canvas context to draw to
@@ -317,9 +381,15 @@ function flipRookTiles(row, col) {
     whiteBoard.board[row][i] = blackBoard.board[row][i];
     blackBoard.board[row][i] = rowTemp;
 
+    whiteBoard.board[row][i].switchBoard();
+    blackBoard.board[row][i].switchBoard();
+
     if (i != row) {
       whiteBoard.board[i][col] = blackBoard.board[i][col];
       blackBoard.board[i][col] = colTemp;
+
+      whiteBoard.board[i][col].switchBoard();
+      blackBoard.board[i][col].switchBoard();
     }
   }
 
@@ -341,12 +411,18 @@ function flipBishTiles(row, col) {
       temp = whiteBoard.board[row1][i];
       whiteBoard.board[row1][i] = blackBoard.board[row1][i];
       blackBoard.board[row1][i] = temp;
+
+      whiteBoard.board[row1][i].switchBoard();
+      blackBoard.board[row1][i].switchBoard();
     }
 
     if (row2 < LENGTH && row2 >= 0 && row1 != row2) {
       temp = whiteBoard.board[row2][i];
       whiteBoard.board[row2][i] = blackBoard.board[row2][i];
       blackBoard.board[row2][i] = temp;
+
+      whiteBoard.board[row2][i].switchBoard();
+      blackBoard.board[row2][i].switchBoard();
     }
   }
 
@@ -387,16 +463,20 @@ function Unit() {
 
   // unit stats
   this.hp           = 0;     // health
+  this.maxHp        = 0;     // max health of unit used to draw health bars
   this.spd          = 0;     // movement speed (how far unit can move)
   this.rng          = 0;     // attack range (how far unit can attack)
   this.dmg          = 0;     // damage
 
-  this.switchBoard = function(){
+  /**
+   * Switch the unit from one board to the other
+   */
+  this.switchBoard = function() {
     if(this.loc.board === WHITE)
       this.loc.board = BLACK;
     else
       this.loc.board = WHITE;
-  }
+  };
 
   /**
    * Draw the unit to the board
@@ -405,6 +485,24 @@ function Unit() {
    */
   this.draw = function(ctx) {
     ctx.drawImage(assetLoader.imgs[this.type + '_' + this.color], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
+
+    this.drawHp(ctx);
+  };
+
+  /**
+   * Draw the unit's hp to the board
+   * @param ctx The canvas context to draw on
+   */
+  this.drawHp = function(ctx) {
+    var barWidth = TILE_SIZE - 10;
+    var barHeight = 7;
+
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(this.loc.col * TILE_SIZE + 5.5, this.loc.row * TILE_SIZE + TILE_SIZE - Math.floor(barHeight / 2) + .5, barWidth, barHeight);
+    ctx.fillStyle = 'rgb(0, 255, 0)';
+    ctx.fillRect(this.loc.col * TILE_SIZE + 6, this.loc.row * TILE_SIZE + TILE_SIZE - Math.floor(barHeight / 2) + 1,  (this.hp / this.maxHp) * (barWidth - 2), barHeight - 2);
+    ctx.restore();
   };
 
   /**
@@ -476,8 +574,6 @@ function Unit() {
    */
   this.attack = function(row, col) {
     if (this.canAttack() && this.inAtkRange(row, col)) {
-      // do something
-
       this.atkActions++;
       return true;
     }
@@ -555,6 +651,7 @@ function Unit() {
 // CC      LL      AA   AA  SSSSS   SSSSS  EEEEE    SSSSS
 // CC    C LL      AAAAAAA      SS      SS EE           SS
 //  CCCCC  LLLLLLL AA   AA  SSSSS   SSSSS  EEEEEEE  SSSSS
+
 /**
  * Warrior class
  * @param color The color to assign the unit
@@ -565,6 +662,7 @@ function Warrior(color, loc) {
   this.loc   = loc;
 
   this.hp    = 3;
+  this.maxHp = this.hp;
   this.spd   = 2;
   this.rng   = 1;
   this.dmg   = 2;
@@ -581,6 +679,7 @@ function Archer(color, loc) {
   this.loc   = loc;
 
   this.hp    = 2;
+  this.maxHp = this.hp;
   this.spd   = 3;
   this.rng   = 2;
   this.dmg   = 2;
@@ -598,6 +697,7 @@ function Wizard(color, loc, spell) {
   this.spell = spell;
 
   this.hp    = 5;
+  this.maxHp = this.hp;
   this.spd   = 4;
 
   /**
@@ -606,6 +706,8 @@ function Wizard(color, loc, spell) {
    */
   this.draw = function(ctx) {
     ctx.drawImage(assetLoader.imgs[this.type + '_' + this.spell + '_' + this.color], this.loc.col * TILE_SIZE, this.loc.row * TILE_SIZE);
+
+    this.drawHp(ctx);
   };
 
   /**
@@ -614,7 +716,18 @@ function Wizard(color, loc, spell) {
    * @return True if the Wizard can use it's power, false otherwise
    */
   this.attack = function() {
-    return;
+    if (this.canAttack() && arguments.length == 0) {
+      if (this.spell === DIAG) {
+        flipBishTiles(this.loc.row, this.loc.col)
+      }
+      else if (this.spell === ORTH) {
+        flipRookTiles(this.loc.row, this.loc.col);
+      }
+      this.atkActions++;
+      return true;
+    }
+
+    return false;
   };
 
   /**
@@ -669,7 +782,7 @@ Wizard.prototype = new Unit(); // set up inheritance
 function populate_boards() {
   // add light units to board
   var row = 0;
-  for(var i=0; i<LENGTH; i++){
+  for(var i=0; i<LENGTH; i++) {
     if(i==0){ whiteBoard.board[row][i].unit=new Wizard(WHITE, {row: row, col: i, board: WHITE}, ORTH) }
     if(i==1){ whiteBoard.board[row][i].unit=new Warrior(WHITE, {row: row, col: i, board: WHITE}) }
     if(i==2){ whiteBoard.board[row][i].unit=new Archer(WHITE, {row: row, col: i, board: WHITE}) }
