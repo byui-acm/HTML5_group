@@ -53,6 +53,19 @@ body {
 	height: 80%;
 }
 
+.how {
+	display: none;
+	font-size: 2em;
+	font-family: arial;
+	/*text-align: center;*/
+	padding: 2em;
+	background-image: url('imgs/book.png');
+	background-repeat: no-repeat;
+	background-position: center;
+	color: black;
+	height: 80%;
+}
+
 .art {
 	position: absolute;
 	left: 50px;

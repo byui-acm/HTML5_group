@@ -874,10 +874,16 @@ function mainMenu() {
   $('.credit').click(function() {
     $('.main').hide();
     $('.credits').show();
-  })
+  });
   $('.back').click(function() {
     $('.credits').hide();
+    $('.how').hide();
     $('.main').show();
+  });
+  $('.how-to-play').click(function(){
+    // $('')
+    $('.main').hide();
+    $('.how').show();
   });
 }
 
