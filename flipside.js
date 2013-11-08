@@ -280,6 +280,7 @@ assetLoader = new function() {
     src = this.sounds[sound];
     this.sounds[sound] = new Audio();
     this.sounds[sound].status = 'loading';
+    this.sounds[sound].loop = true;
     this.sounds[sound].src = src;
   }
 
@@ -869,6 +870,14 @@ function mainMenu() {
     $('.menu').hide();
     assetLoader.sounds.menu.pause();
     startGame();
+  });
+  $('.credit').click(function() {
+    $('.main').hide();
+    $('.credits').show();
+  })
+  $('.back').click(function() {
+    $('.credits').hide();
+    $('.main').show();
   });
 }
 
